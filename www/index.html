@@ -111,6 +111,7 @@ input[type=email], input[type=password] {
 		}
 		function alertDismissed() {
 		}
+		/*
 		function StartScan() {
 		   cordova.plugins.barcodeScanner.scan(
 				function (result) {
@@ -163,6 +164,7 @@ input[type=email], input[type=password] {
 				}
 		   );
 		}
+		*/
 		function StartScan_box() {
 		   cordova.plugins.barcodeScanner.scan(
 				function (result) {
@@ -201,83 +203,8 @@ input[type=email], input[type=password] {
 				});
 			}
 		};
-		function show_dialog_select_hours() {
-			var dialog = document.getElementById('dialog-select-hours-alert');
-			if (dialog) {
-				$("#choose-change-hours").val(window.localStorage.getItem('hours'));
-				dialog.show();
-			}
-			else {
-				ons.createDialog('dialog-select-hours.html')
-					.then(function (dialog) {
-					$("#choose-change-hours").val(window.localStorage.getItem('hours'));
-					dialog.show();
-				});
-			}
-			setTimeout(function(){
-				if(window.localStorage.getItem('hours')==null)
-				{
-					$("#choose-change-hours").val("10").trigger('change');
-				}
-				else
-				{
-					$("#choose-change-hours").val(window.localStorage.getItem('hours'));
-				}
-			}, 500);
-		};
-		function show_dialog_enter_emergency_code(text) {
-			var dialog = document.getElementById('dialog-enter_emergency_code');
-			if (dialog) {
-				$('#sever-side-emergency-code').html(text);
-				dialog.show();
-			}
-			else {
-				ons.createDialog('dialog-enter_emergency_code.html')
-					.then(function (dialog) {
-					$('#sever-side-emergency-code').html(text);
-					dialog.show();
-				});
-			}
-		};
 		function hideDialog(id) {
 			document.getElementById(id).hide();
-		};
-		function editSelects_change_hours(){
-			console.log($("#choose-change-hours").val());
-			window.localStorage.setItem('hours',$("#choose-change-hours").val());
-		};
-		function submit_emergency_code() {
-			if($('input[name=enter_emergency_code]').val()!="")
-			{
-				console.log($('input[name=enter_emergency_code]').val());
-				window.localStorage.setItem('emergency_answer',$('input[name=enter_emergency_code]').val());
-				
-				$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال آماده سازی...</span>');
-				modal.show({animation: "fade"});
-				
-				emergency_submit_answer(function(text){
-					console.log(text);
-					if(text!="1")
-					{
-						document.getElementById('dialog-enter_emergency_code').hide();
-						$('#modal-text').html('<ons-icon icon="fa-minus-circle" size="28px"></ons-icon> <span>خطا در فعال سازی حالت فوق العاده ،<br> لطفا با پشتیبانی تماس بگیرید</span><hr>' + text);
-						modal.show({animation: "fade"});
-						setTimeout(function(){ modal.hide({animation: "fade"}); }, 3000);
-					}
-					else
-					{
-						document.getElementById('dialog-enter_emergency_code').hide();
-						$('#modal-text').html('<ons-icon icon="fa-check" size="28px"></ons-icon> <span>حالت فوق العاده با موفقیت فعال شد.</span>');
-						modal.show({animation: "fade"});
-						setTimeout(function(){ modal.hide({animation: "fade"}); }, 3000);
-					}
-				});
-			}
-			else
-			{
-				document.getElementById('dialog-enter_emergency_code').hide();
-				modal.show({animation: "fade"});
-			}
 		};
 	</script>
 	<!-- App -->
@@ -361,11 +288,8 @@ input[type=email], input[type=password] {
 								});
 						}
 					};
-					page.querySelector('#goto-setting-button').onclick = function() {					
-						document.querySelector('#myNavigator').pushPage('setting.html', {animation: "slid"});
-					};
-					page.querySelector('#goto-contact-button').onclick = function() {
-						document.querySelector('#myNavigator').pushPage('contact.html', {data: {title: 'home'}});
+					page.querySelector('#goto-code_list-button').onclick = function() {
+						document.querySelector('#myNavigator').pushPage('code_list.html', {data: {title: 'home'}});
 					};
 			}
 			else if (page.id === 'setting'){
@@ -659,58 +583,169 @@ input[type=email], input[type=password] {
 	<template id="home.html">
 		<ons-page id="home" on-device-backbutton="go_back_index();">
 			<ons-toolbar>
-				<div class="center" style="font-size:15px;direction: rtl;text-align: right;padding-right:10px;">نرم افزار مدیریت همراه فیلم - ویژه رانندگان</div>
+				<div class="center" style="font-size:15px;direction: rtl;text-align: right;padding-right:10px;">نرم افزار مدیریت همراه فیلم - ویژه پشتیبانی</div>
 			</ons-toolbar>
 			<div class="login-form">
 				<p>لطفا گزینه مورد نظر خود را انتخاب نمایید :</p>
 				<br>
-				<ons-button id="goto-active_user-button" modifier="large--cta">فعال سازی کارت اشتراک</ons-button>
+				<ons-button id="goto-active_user-button" modifier="large--cta">اسکن اطلاعات دستگاه</ons-button>
 				<br>
-				<ons-button id="goto-deactive_user-button" modifier="large--cta">غیرفعال سازی کارت اشتراک</ons-button>
+				<ons-button id="goto-deactive_user-button" modifier="large--cta">انتخاب دستگاه از لیست</ons-button>
 				<br>
-				<ons-button id="goto-setting-button" modifier="large--cta">تنظیمات</ons-button>
-				<br>
-				<ons-button id="goto-contact-button" modifier="large--cta">تماس با پشتیبانی</ons-button>
+				<ons-button id="goto-code_list-button" modifier="large--cta">لیست کدهای خطا</ons-button>
 			</div>
 		</ons-page>
 	</template>
-	<template id="setting.html">
-		<ons-page id="setting">
+	<template id="code_list.html">
+		<ons-page id="home" on-device-backbutton="go_back_index();">
 			<ons-toolbar>
-				<div class="right" style="width: 48px;max-width:11%;"><ons-back-button></ons-back-button></div>
-				<div class="center" style="width: 100%;font-size:15px;direction: rtl;text-align: right;">تنظیمات</div>
-			</ons-toolbar>
-			<div class="login-form" >
-				<ons-button id="goto-scan_box-button" modifier="large--cta" style="background-color: #4CAF50; color: #ffffff;">اسکن بارکد بر روی باکس</ons-button>
-				<br/>
-				<ons-button id="goto-get_hours-button" modifier="large--cta" style="background-color: #4CAF50; color: #ffffff;">تعیین تعداد ساعت مجاز</ons-button>
-				<br/>
-				<ons-button id="goto-enter_emergency_code-button" modifier="large--cta" style="background-color: #4CAF50; color: #ffffff;">ورود کد</ons-button>
-				<br/>
-				<br/>
-				<ons-button id="return-button" modifier="large--cta"><ons-icon icon="fa-arrow-left" size="14px" fixed-width="true"></ons-icon> بازگشت</ons-button>
-			</div>
-		</ons-page>
-	</template>
-	<template id="contact.html">
-		<ons-page id="contact">
-			<ons-toolbar>
-				<div class="right" style="width: 48px;max-width:11%;"><ons-back-button></ons-back-button></div>
-				<div class="center" style="width: 100%;font-size:15px;direction: rtl;text-align: right;">پشتیبانی</div>
+				<div class="center" style="font-size:15px;direction: rtl;text-align: right;padding-right:10px;">نرم افزار مدیریت همراه فیلم - ویژه پشتیبانی</div>
 			</ons-toolbar>
 			<div class="login-form">
-				<div style="margin-bottom: 32px;padding: 1px 0 0 0;direction: rtl;text-align: justify;">
-					<div class="card">
-						<!-- <h2 class="card__title" style="direction: rtl;text-align: justify;">Card Title</h2> -->
-						<div class="card__content" style="direction: rtl;text-align: center;">تلفن تماس : <div style="margin-top:14px;"></div><a href="tel:09367258549" style="color:black;text-decoration:none;"> 09367258549</a></div>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 12
 					</div>
-				</div> 
-				<!-- <p>تلفن تماس : <br/> 09367258549</p> -->
-				<!-- <br> -->
-				<!-- <ons-button id="emergency-button" modifier="large--cta" style="background-color: #4CAF50; color: #ffffff;"><ons-icon icon="ion-navicon" size="40px" fixed-width="true"></ons-icon>وضعیت اضطراری</ons-button> -->
-				<ons-button id="emergency-button" modifier="large--cta" style="background-color: #4CAF50; color: #ffffff;"><span id="udid"></span></ons-button>
-				<div style="margin-top: 41px;width: 100%;height: 1px;"></div>
-				<ons-button id="return-button" modifier="large--cta"><ons-icon icon="fa-arrow-left" size="14px" fixed-width="true"></ons-icon> بازگشت</ons-button>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">سیستم کلا کار نمی کند</span>
+							<hr/>
+							مهلت استفاده از سیستم به پایان رسیده است.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 13
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">سیستم کلا کار نمی کند</span>
+							<hr/>
+							تاریخ last_date از تاریخ امروز سرور جلوتر هست.<br/>احتمال دستکاری وجود دارد.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 14
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">سیستم کلا کار نمی کند</span>
+							<hr/>
+							در فایل های last و valid تاریخ با استاندارد صحیح وارد نشده است. <br/>احتمال دستکاری وجود دارد.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 15
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام تمدید آبمونمان</span>
+							<hr/>
+							udid سرور درست وارد نشده است.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 16
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام ثبت یوزرنیم و پسورد جدید توسط راننده</span>
+							<hr/>
+							udid سرور درست وارد نشده است.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 17
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">سیستم کلا کار نمی کند</span>
+							<hr/>
+							میانگین تاریخ گوشی مسافرین با تاریخ سرور همخوانی ندارد.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 18
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">سیستم کلا کار نمی کند</span>
+							<hr/>
+							تاریخ فعلی سرور از تاریخ استارت کل پروژه عقب تر می باشد.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 19
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام گرفتن کد اولیه حالت امرجنسی</span>
+							<hr/>
+							udid سرور درست وارد نشده است.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 20
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام تولید کد امرجنسی توسط ادمین</span>
+							<hr/>
+							udid سرور درست وارد نشده است.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 21
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام تولید کد امرجنسی توسط ادمین</span>
+							<hr/>
+							تاریخ سرور با تاریخ امروز همخوانی ندارد
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 22
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام ثبت کد امرجنسی توسط راننده</span>
+							<hr/>
+							udid سرور درست وارد نشده است.
+						</div>
+					</div>
+				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 23
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام ثبت کد امرجنسی توسط راننده</span>
+							<hr/>
+							کد وارد شده صحیح نمی باشد
+						</div>
+					</div>
+				</ons-card>
 			</div>
 		</ons-page>
 	</template>
@@ -724,64 +759,6 @@ input[type=email], input[type=password] {
 			<div style="text-align: center; padding: 10px;">
 				<p id="dialog-text" class="rtl"></p>
 				<p><ons-button onclick="hideDialog('dialog-alert')">تائید</ons-button></p>
-			</div>
-		</ons-dialog>
-	</template>
-	<template id="dialog-select-hours.html">
-		<ons-dialog id="dialog-select-hours-alert">
-			<div style="text-align: center; padding: 10px;">
-				<p id="dialog-text" class="rtl">
-					<ons-select id="choose-change-hours" onchange="editSelects_change_hours()">
-						<option value="30">30</option>
-						<option value="29">29</option>
-						<option value="28">28</option>
-						<option value="27">27</option>
-						<option value="26">26</option>
-						<option value="25">25</option>
-						<option value="24">24</option>
-						<option value="23">23</option>
-						<option value="22">22</option>
-						<option value="21">21</option>
-						<option value="20">20</option>
-						<option value="19">19</option>
-						<option value="18">18</option>
-						<option value="17">17</option>
-						<option value="16">16</option>
-						<option value="15">15</option>
-						<option value="14">14</option>
-						<option value="13">13</option>
-						<option value="12">12</option>
-						<option value="11">11</option>
-						<option value="10">10</option>
-						<option value="9">9</option>
-						<option value="8">8</option>
-						<option value="7">7</option>
-						<option value="6">6</option>
-						<option value="5">5</option>
-						<option value="4">4</option>
-						<option value="3">3</option>
-						<option value="2">2</option>
-					</ons-select>
-				</p>
-				<p><ons-button onclick="hideDialog('dialog-select-hours-alert')">تائید</ons-button></p>
-			</div>
-		</ons-dialog>
-	</template>
-	<template id="dialog-enter_emergency_code.html">
-		<ons-dialog id="dialog-enter_emergency_code">
-			<div style="text-align: center; padding: 10px;">
-				<p id="dialog-text" class="rtl">
-					لطفا این کد را به کارشناس پشتیبانی همراه فیلم اعلام نمایید :
-					<br>
-					<span id="sever-side-emergency-code">1234</span>
-				</p>
-				<hr>
-				<p id="dialog-text" class="rtl">
-					سپس کدی که کارشناس همراه فیلم به شما میدهد را در اینجا وارد نمایید :
-					<br>
-					<ons-input id="enter_emergency_code" name="enter_emergency_code" class="rtl center-text" modifier="underbar" placeholder="کد را وارد نمایید" float></ons-input>
-				</p>
-				<p><ons-button onclick="submit_emergency_code()">تائید</ons-button></p>
 			</div>
 		</ons-dialog>
 	</template>

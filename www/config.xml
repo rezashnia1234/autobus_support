@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <widget xmlns = "http://www.w3.org/ns/widgets"
         xmlns:gap = "http://phonegap.com/ns/1.0"
-        id        = "ir.test.autobus"
+        id        = "ir.test.autobussupport"
         version   = "1.10" >
 		
 		
-    <name>همراه فیلم</name>
-    <description>نرم افزار راننده</description>
+    <name>پشتیبانی</name>
+    <description>نرم افزار پشتیبانی</description>
 
     <!-- <preference name="permissions"                value="none"/> -->
 
