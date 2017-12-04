@@ -74,6 +74,23 @@ input[type=email], input[type=password] {
 	<script>
 		function init() {		
 			console.log('SMGROUP ::::::::::::::::::::::::::::::::::::    start init()');
+			
+			var favorite = [];
+			if(window.localStorage.getItem('favorite_array') == null)
+			{
+				window.localStorage.setItem('favorite_array',JSON.stringify(["786"]));
+			}
+			if(window.localStorage.getItem('favorite_array')==JSON.stringify(["786"]))
+			{
+				favorite = [];
+			}
+			else
+			{
+				temp_array = JSON.parse(window.localStorage.getItem('favorite_array'));
+				removedItems = temp_array.splice($.inArray("786" ,temp_array),1);
+				favorite = temp_array;
+			}
+			
 			document.addEventListener("deviceready", onDeviceReady, false);
 		}
 		function onDeviceReady() {
@@ -111,65 +128,13 @@ input[type=email], input[type=password] {
 		}
 		function alertDismissed() {
 		}
-		/*
-		function StartScan() {
-		   cordova.plugins.barcodeScanner.scan(
-				function (result) {
-					if(result.text!="" && $.isNumeric(result.text))
-						add_user(result.text);
-					else
-						modal.hide({animation: "fade"});
-				},
-				function (error) {
-					$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>خطا در اسکن کارت ، لطفا با پشتیبانی تماس بگیرید.</span><br/>' + error);
-					modal.show({animation: "fade"});
-				},
-				{
-					preferFrontCamera : false, // iOS and Android
-					showFlipCameraButton : false, // iOS and Android
-					showTorchButton : true, // iOS and Android
-					torchOn: false, // Android, launch with the torch switched on (if available)
-					prompt : "Place a barcode inside the scan area", // Android
-					resultDisplayDuration: 0, // Android, display scanned text for X ms. 0 suppresses it entirely, default 1500
-					//formats : "QR_CODE,PDF_417", // default: all but PDF_417 and RSS_EXPANDED
-					//orientation : "landscape", // Android only (portrait|landscape), default unset so it rotates with the device
-					disableAnimations : false, // iOS
-					disableSuccessBeep: false // iOS
-				}
-		   );
-		}
-		function StartScan_for_deactive() {
-		   cordova.plugins.barcodeScanner.scan(
-				function (result) {
-					if(result.text!="" && $.isNumeric(result.text))
-						deactive_user(result.text);
-					else
-						modal.hide({animation: "fade"});
-				},
-				function (error) {
-					$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>خطا در اسکن کارت ، لطفا با پشتیبانی تماس بگیرید.</span><br/>' + error);
-					modal.show({animation: "fade"});
-				},
-				{
-					preferFrontCamera : false, // iOS and Android
-					showFlipCameraButton : false, // iOS and Android
-					showTorchButton : true, // iOS and Android
-					torchOn: false, // Android, launch with the torch switched on (if available)
-					prompt : "Place a barcode inside the scan area", // Android
-					resultDisplayDuration: 0, // Android, display scanned text for X ms. 0 suppresses it entirely, default 1500
-					//formats : "QR_CODE,PDF_417", // default: all but PDF_417 and RSS_EXPANDED
-					//orientation : "landscape", // Android only (portrait|landscape), default unset so it rotates with the device
-					disableAnimations : false, // iOS
-					disableSuccessBeep: false // iOS
-				}
-		   );
-		}
-		*/
 		function StartScan_box() {
 		   cordova.plugins.barcodeScanner.scan(
 				function (result) {
 					if(result.text!="")
-						window.localStorage.setItem('server_udid',result.text);
+					{
+						process_scan_result(result.text);
+					}
 				},
 				function (error) {
 					$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>خطا در اسکن کارت ، لطفا با پشتیبانی تماس بگیرید.</span><br/>' + error);
@@ -189,6 +154,42 @@ input[type=email], input[type=password] {
 				}
 		   );
 		}
+		function process_scan_result(text) {
+			window.localStorage.setItem('server_udid',text);
+
+			$('#goto-select_box_from_list-button').css("display","block");
+			$('#goto-select_box_from_list-br').css("display","block");
+			$('#goto-select_last_box-button').css("display","block");
+			$('#goto-select_last_box-br').css("display","block");
+			
+			if(window.localStorage.getItem($.md5(text))==null)
+				ons.notification.prompt({message: 'شماره پلاک دستگاه؟',callback:show_dialog_for_save_get_title});
+			else
+				document.querySelector('#myNavigator').pushPage('services.html', {data: {title: 'services'}});
+				
+		};
+		function show_dialog_for_save_get_title(text) {
+			console.log(text);
+			if(text=="")
+			{
+				document.querySelector('#myNavigator').pushPage('services.html', {data: {title: 'services'}});
+			}
+			else
+			{
+				temp_array = JSON.parse(window.localStorage.getItem('favorite_array'));
+				
+				var add_temp_array = {"title": text,"udid": window.localStorage.getItem("server_udid")};
+				temp_array.push($.md5(window.localStorage.getItem("server_udid")));
+				window.localStorage.setItem($.md5(window.localStorage.getItem("server_udid")),JSON.stringify(add_temp_array));
+				window.localStorage.setItem('favorite_array',JSON.stringify(temp_array));
+				
+				document.querySelector('#myNavigator').pushPage('services.html', {data: {title: 'services'}});
+			}
+		};
+		function set_udid(udid) {
+			window.localStorage.setItem('server_udid',udid);
+			document.querySelector('#myNavigator').pushPage('services.html', {data: {title: 'services'}});
+		};
 		function fromTemplate(text) {
 			var dialog = document.getElementById('dialog-alert');
 			if (dialog) {
@@ -206,10 +207,16 @@ input[type=email], input[type=password] {
 		function hideDialog(id) {
 			document.getElementById(id).hide();
 		};
+		function loadURL(url){
+			console.log('SMGROUP ::::::::::::::::::::::::::::::::::::    loadURL click : ' + url);
+			window.open(url, '_system', 'location=yes');
+			return false;
+		}
 	</script>
 	<!-- App -->
 	<script type="text/javascript">
 		server_url = "http://hamrah-film.ir/check_net.php";
+		<!-- server_url = "http://127.0.0.1/autobus/check_net.php"; -->
 		
 		//ons.platform.select('android');
 		ons.platform.select('ios');
@@ -222,145 +229,78 @@ input[type=email], input[type=password] {
 			modal = document.querySelector('ons-modal');
 			
 			if (page.id === 'home') {
-					/*
-					$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال آماده سازی...</span>');
-					modal.show({animation: "fade"});
-					check_server(function(text){
-						console.log(text);
-						if(text!="1")
-						{
-							$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-							modal.show({animation: "fade"});
-							setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-						}
-					});
-					*/
-					page.querySelector('#goto-active_user-button').onclick = function() {
-						if(window.localStorage.getItem('server_udid') == null)
-						{
-							fromTemplate('لطفا قبل از هر کاری با مراجعه به بخش تنظیمات، بارکد موجود بر روی باکس همراه فیلم را اسکن نمایید.');
-						}
-						else
-						{
-							if(window.localStorage.getItem('hours') == null)
-							{
-								fromTemplate('لطفا با مراجعه به بخش تنظیمات، تعداد ساعت مورد نظر برای ایجاد دسترسی به آرشیو فیلم را مشخص نمایید.');
-							}
-							else
-							{
-								$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال آماده سازی...</span>');
-								modal.show({animation: "fade"});
-
-								check_server(function(text){
-									console.log(text);
-									if(text!="1")
-									{
-										$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-										modal.show({animation: "fade"});
-										setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-									}
-									else
-										StartScan();
-								});
-							}
-						}
-					};
-					page.querySelector('#goto-deactive_user-button').onclick = function() {
-						if(window.localStorage.getItem('server_udid') == null)
-						{
-							fromTemplate('لطفا قبل از هر کاری با مراجعه به بخش تنظیمات، بارکد موجود بر روی باکس همراه فیلم را اسکن نمایید.');
-						}
-						else
-						{
-								$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال آماده سازی...</span>');
-								modal.show({animation: "fade"});
-
-								check_server(function(text){
-									console.log(text);
-									if(text!="1")
-									{
-										$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-										modal.show({animation: "fade"});
-										setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-									}
-									else
-										StartScan_for_deactive();
-								});
-						}
-					};
-					page.querySelector('#goto-code_list-button').onclick = function() {
-						document.querySelector('#myNavigator').pushPage('code_list.html', {data: {title: 'home'}});
-					};
-			}
-			else if (page.id === 'setting'){
-					//page.querySelector('ons-toolbar .center').innerHTML = page.data.title;
 					page.querySelector('#goto-scan_box-button').onclick = function() {
 						StartScan_box();
 					};
-					page.querySelector('#goto-get_hours-button').onclick = function() {
-						show_dialog_select_hours();
+					page.querySelector('#goto-select_last_box-button').onclick = function() {
+						document.querySelector('#myNavigator').pushPage('services.html', {data: {title: 'services'}});
 					};
-					page.querySelector('#goto-enter_emergency_code-button').onclick = function() {
-						if(window.localStorage.getItem('server_udid') == null)
-						{
-							fromTemplate('لطفا قبل از هر کاری با مراجعه به بخش تنظیمات، بارکد موجود بر روی باکس همراه فیلم را اسکن نمایید.');
-						}
-						else
-						{
-							if(window.localStorage.getItem('hours') == null)
-							{
-								fromTemplate('لطفا با مراجعه به بخش تنظیمات، تعداد ساعت مورد نظر برای ایجاد دسترسی به آرشیو فیلم را مشخص نمایید.');
-							}
-							else
-							{
-								$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال آماده سازی...</span>');
-								modal.show({animation: "fade"});
-								
-								check_server(function(text){
-									console.log(text);
-									if(text!="1")
-									{
-										$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-										modal.show({animation: "fade"});
-										setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-									}
-									else
-									{
-										emergency_get_number(function(text){
-											console.log(text);
-											if(text!="" && $.isNumeric(text))
-											{
-												modal.hide({animation: "fade"});
-												show_dialog_enter_emergency_code(text);
-											}
-											else
-											{
-												$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-												modal.show({animation: "fade"});
-												setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-											}
-										});
-									}
-								});
-							}
-						}
+					page.querySelector('#goto-select_box_from_list-button').onclick = function() {
+						document.querySelector('#myNavigator').pushPage('device_list.html', {data: {title: 'device_list'}});
 					};
-					
-					page.querySelector('#return-button').onclick = function() {
+					page.querySelector('#goto-code_list-button').onclick = function() {
+						document.querySelector('#myNavigator').pushPage('code_list.html', {data: {title: 'code_list'}});
+					};
+					page.querySelector('#goto-get_udid_from_wifi-button').onclick = function() {
+						get_udid();
+					};
+					if(window.localStorage.getItem("server_udid")===null)
+					{
+						setTimeout(function(){
+							$('#goto-select_box_from_list-button').css("display","none");
+							$('#goto-select_box_from_list-br').css("display","none");
+							$('#goto-select_last_box-button').css("display","none");
+							$('#goto-select_last_box-br').css("display","none");
+						}, 300);
+					}
+			}
+			else if (page.id === 'services') {
+					page.querySelector('#goto-next_month-button').onclick = function() {
+						show_dialog_select_days();
+					};
+					page.querySelector('#goto-update_film_list-button').onclick = function() {
+						set_film_list();
+					};
+					page.querySelector('#goto-emergency_code-button').onclick = function() {
+						ons.notification.prompt({message: 'کدی که راننده اعلام کرده است',callback:get_emergency_code});
+					};
+					page.querySelector('#goto-back-button').onclick = function() {
 						document.querySelector('#myNavigator').pushPage('home.html', {data: {title: 'home'}});
 					};
 			}
-			else if (page.id === 'contact'){
-					page.querySelector('#return-button').onclick = function() {
+			else if (page.id === 'device_list') {
+					page.querySelector('#goto-home-button').onclick = function() {
 						document.querySelector('#myNavigator').pushPage('home.html', {data: {title: 'home'}});
 					};
-					setTimeout(function(){
-						if(window.sessionStorage.getItem('server_udid_set') == null)
-						{
-							window.sessionStorage.setItem("server_udid_set","0");
-							$('#udid').html(window.localStorage.getItem('server_udid'));
+
+					var favorite = [];
+					if(window.localStorage.getItem('favorite_array') == null)
+					{
+						window.localStorage.setItem('favorite_array',JSON.stringify(["786"]));
+					}
+					if(window.localStorage.getItem('favorite_array')==JSON.stringify(["786"]))
+					{
+						favorite = [];
+						$(".full_list").css("display","none");
+					}
+					else
+					{
+						$(".empty_list").css("display","none");
+						temp_array = JSON.parse(window.localStorage.getItem('favorite_array'));
+						removedItems = temp_array.splice($.inArray("786" ,temp_array),1);
+						favorite = temp_array;
+						
+						
+						var html = '';
+						for(i = 0; i < favorite.length; i++) {
+							temp_item = window.localStorage.getItem(favorite[i]);
+							temp_item = JSON.parse(temp_item);
+							<!-- temp_item["title"]; -->
+							<!-- temp_item["udid"]; -->
+							html += '<ons-button id="" modifier="large--cta" onclick="set_udid(\'' + temp_item["udid"] + '\');">' + temp_item["title"] + '</ons-button><br>';
 						}
-					}, 500);
+						$("#full_list_content").html(html);
+					}
 			}
 		});
 		function check_server(handle_check_server) {
@@ -384,50 +324,7 @@ input[type=email], input[type=password] {
 					},
 			});
 		}
-		function emergency_get_number(handle_check_server) {
-			$.ajax({
-					url: server_url,
-					type: "POST",
-					data: {
-						act: "emergency_get_number",
-						udid: $.md5(window.localStorage.getItem('server_udid')),
-					},
-					//async: true,
-					success : function(text)
-					{
-						modal.hide({animation: "fade"});
-						handle_check_server(text);
-					},
-					error: function(jqXHR, exception) {
-						$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-						modal.show({animation: "fade"});
-						setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-					},
-			});
-		}
-		function emergency_submit_answer(handle_check_server) {
-			$.ajax({
-					url: server_url,
-					type: "POST",
-					data: {
-						act: "emergency_apply",
-						emergency_answer: window.localStorage.getItem('emergency_answer'),
-						udid: $.md5(window.localStorage.getItem('server_udid')),
-					},
-					//async: true,
-					success : function(text)
-					{
-						modal.hide({animation: "fade"});
-						handle_check_server(text);
-					},
-					error: function(jqXHR, exception) {
-						$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-						modal.show({animation: "fade"});
-						setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-					},
-			});
-		}
-		function add_user(scaned_data) {
+		function get_udid() {
 			//var networkState = navigator.connection.type;
 			if ( false && networkState == Connection.NONE) {
 				modal.hide({animation: "fade"});
@@ -445,137 +342,236 @@ input[type=email], input[type=password] {
 					navigator.vibrate(100);
 				}
 				
-				$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال فعال سازی کاربر...</span>');
+				$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال دریافت اطلاعات...</span>');
 				modal.show({animation: "fade"});
 				
 				$.ajax({
 						url: server_url,
 						type: "POST",
 						data: {
-							act: "add_user",
-							username: scaned_data,
-							hours: window.localStorage.getItem('hours'),
-							udid: $.md5(window.localStorage.getItem('server_udid')),
+							act: "get_udid",
 						},
-						async: true,
+						async: false,
 						success : function(text)
 						{
-							if(text!="1")
-							{
-								$('#modal-text').html('<ons-icon icon="fa-minus-circle" size="28px"></ons-icon> <span>خطا در فعال سازی کاربر جدید ،<br> لطفا با پشتیبانی تماس بگیرید</span><hr>' + text);
-								modal.show({animation: "fade"});
-							}
-							else
-							{
-								modal.hide({animation: "fade"});
-								navigator.notification.alert(
-									'کاربر با موفقیت فعال شد.',  // message
-									alertDismissed,			// callback
-									'توجه',					// title
-									'تائید'					// buttonName
-								);
-							}
+							<!-- setTimeout(function(){}, 1000); -->
+							modal.hide({animation: "fade"});
+							ons.notification.alert('UDID :<br>' + text);
+							copyToClipboard(text);
+							loadURL("http://hamrah-film.ir/check_net.php?act=get_udid");
 						},
 						error: function(jqXHR, exception) {
 							$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
 							modal.show({animation: "fade"});
 							setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-							/*
-							if (jqXHR.status === 0) {
-								$('#show_result').html('در اتصال شما به اینترنت مشکلی به وجود آمده است ، امکان نمایش محتوا وجود ندارد');
-							} else if (jqXHR.status == 404) {
-								$('#show_result').html('صفحه مورد نظر شما یافت نشد');
-							} else if (jqXHR.status == 500) {
-								$('#show_result').html('Internal Server Error [500].');
-							} else if (exception === 'parsererror') {
-								$('#show_result').html('Requested JSON parse failed.');
-							} else if (exception === 'timeout') {
-								$('#show_result').html('Time out error.');
-							} else if (exception === 'abort') {
-								$('#show_result').html('Ajax request aborted.');
-							} else {
-								$('#show_result').html('Uncaught Error.\n' + jqXHR.responseText);
-							}
-							*/
 						},
 				});
 			}
 		}
-		function deactive_user(scaned_data) {
-			//var networkState = navigator.connection.type;
-			if ( false && networkState == Connection.NONE) {
-				modal.hide({animation: "fade"});
-				navigator.notification.alert(
-					'لطفا به شبکه WIFI اتوبوس متصل شوید.',  // message
-					alertDismissed,			// callback
-					'اخطار',				// title
-					'تائید'					// buttonName
-				);
-			}
-			else
-			{
-				navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
-				if (navigator.vibrate) {
-					navigator.vibrate(100);
-				}
-				
-				$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال فعال سازی کاربر...</span>');
-				modal.show({animation: "fade"});
-				
-				$.ajax({
-						url: server_url,
-						type: "POST",
-						data: {
-							act: "delete_user",
-							username: scaned_data,
-							hours: window.localStorage.getItem('hours'),
-							udid: $.md5(window.localStorage.getItem('server_udid')),
-						},
-						async: true,
-						success : function(text)
-						{
-							if(text!="1")
-							{
-								$('#modal-text').html('<ons-icon icon="fa-minus-circle" size="28px"></ons-icon> <span>خطا در غیرفعال سازی کاربر جدید ،<br> لطفا با پشتیبانی تماس بگیرید</span><hr>' + text);
-								modal.show({animation: "fade"});
-							}
-							else
-							{
-								modal.hide({animation: "fade"});
-								navigator.notification.alert(
-									'کاربر با موفقیت غیرفعال شد.',  // message
-									alertDismissed,			// callback
-									'توجه',					// title
-									'تائید'					// buttonName
-								);
-							}
-						},
-						error: function(jqXHR, exception) {
-							$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
-							modal.show({animation: "fade"});
-							setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
-							/*
-							if (jqXHR.status === 0) {
-								$('#show_result').html('در اتصال شما به اینترنت مشکلی به وجود آمده است ، امکان نمایش محتوا وجود ندارد');
-							} else if (jqXHR.status == 404) {
-								$('#show_result').html('صفحه مورد نظر شما یافت نشد');
-							} else if (jqXHR.status == 500) {
-								$('#show_result').html('Internal Server Error [500].');
-							} else if (exception === 'parsererror') {
-								$('#show_result').html('Requested JSON parse failed.');
-							} else if (exception === 'timeout') {
-								$('#show_result').html('Time out error.');
-							} else if (exception === 'abort') {
-								$('#show_result').html('Ajax request aborted.');
-							} else {
-								$('#show_result').html('Uncaught Error.\n' + jqXHR.responseText);
-							}
-							*/
-						},
-				});
-			}
-		}
+		function copyToClipboard(element) {
+			var $temp = $("<input id='A786-110'>");
+			
+			$("body").append($temp);
+			/*
+			var isiOSDevice = navigator.userAgent.match(/ipad|iphone/i);
+			if (isiOSDevice) {
+				$temp.val(element);
+				var input = document.getElementById("A786-110");
+				var editable = input.contentEditable;
+				var readOnly = input.readOnly;
 
+				input.contentEditable = true;
+				input.readOnly = false;
+
+				var range = document.createRange();
+				range.selectNodeContents(input);
+
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+
+				input.setSelectionRange(0, 999999);
+				input.contentEditable = editable;
+				input.readOnly = readOnly;
+			} else {
+				input.select();
+				$temp.val(element).select();
+			}
+			*/
+			$temp.val(element).select();
+			document.execCommand("copy");
+			$temp.remove();
+		}
+		function show_dialog_select_days() {
+			var dialog = document.getElementById('dialog-select-days-alert');
+			if (dialog) {
+				$("#choose-change-days").val(window.localStorage.getItem('days'));
+				dialog.show();
+			}
+			else {
+				ons.createDialog('dialog-select-days.html')
+					.then(function (dialog) {
+					$("#choose-change-days").val(window.localStorage.getItem('days'));
+					dialog.show();
+				});
+			}
+			setTimeout(function(){
+				if(window.localStorage.getItem('days')==null)
+				{
+					$("#choose-change-days").val("31").trigger('change');
+				}
+				else
+				{
+					$("#choose-change-days").val(window.localStorage.getItem('days'));
+				}
+			}, 500);
+		};
+		function set_next_month() {
+			//var networkState = navigator.connection.type;
+			if ( false && networkState == Connection.NONE) {
+				modal.hide({animation: "fade"});
+				navigator.notification.alert(
+					'لطفا به شبکه WIFI اتوبوس متصل شوید.',  // message
+					alertDismissed,			// callback
+					'اخطار',				// title
+					'تائید'					// buttonName
+				);
+			}
+			else
+			{
+				navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+				if (navigator.vibrate) {
+					navigator.vibrate(100);
+				}
+				
+				$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال دریافت اطلاعات...</span>');
+				modal.show({animation: "fade"});
+				
+				$.ajax({
+						url: server_url,
+						type: "POST",
+						data: {
+							act: "validate_date",
+							udid: $.md5(window.localStorage.getItem("server_udid")),
+							date: window.localStorage.getItem("days"),
+						},
+						async: true,
+						success : function(text)
+						{
+							modal.hide({animation: "fade"});
+							if(text=="1")
+								ons.notification.alert('اطلاعات با موفقیت ثبت شد');
+							else
+								ons.notification.alert('خطا در ثبت اطلاعات :<br>' + text);
+						},
+						error: function(jqXHR, exception) {
+							$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
+							modal.show({animation: "fade"});
+							setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
+						},
+				});
+			}
+		}		
+		function editSelects_change_days(){
+			console.log($("#choose-change-days").val());
+			window.localStorage.setItem('days',$("#choose-change-days").val());
+		};
+		function set_film_list() {
+			//var networkState = navigator.connection.type;
+			if ( false && networkState == Connection.NONE) {
+				modal.hide({animation: "fade"});
+				navigator.notification.alert(
+					'لطفا به شبکه WIFI اتوبوس متصل شوید.',  // message
+					alertDismissed,			// callback
+					'اخطار',				// title
+					'تائید'					// buttonName
+				);
+			}
+			else
+			{
+				navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+				if (navigator.vibrate) {
+					navigator.vibrate(100);
+				}
+				
+				$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال دریافت اطلاعات...</span>');
+				modal.show({animation: "fade"});
+				
+				$.ajax({
+						url: server_url,
+						type: "POST",
+						data: {
+							act: "update_token",
+							udid: $.md5(window.localStorage.getItem("server_udid")),
+						},
+						async: true,
+						success : function(text)
+						{
+							modal.hide({animation: "fade"});
+							if(text=="1")
+								ons.notification.alert('لیست فیلم ها با موفقیت بروز شد');
+							else
+								ons.notification.alert('خطا در ثبت اطلاعات :<br>' + text);
+						},
+						error: function(jqXHR, exception) {
+							$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه WIFI اتوبوس متصل شوید.</span>');
+							modal.show({animation: "fade"});
+							setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
+						},
+				});
+			}
+		}		
+		function get_emergency_code(text) {
+			//var networkState = navigator.connection.type;
+			if ( false && networkState == Connection.NONE) {
+				modal.hide({animation: "fade"});
+				navigator.notification.alert(
+					'لطفا به شبکه WIFI اتوبوس متصل شوید.',  // message
+					alertDismissed,			// callback
+					'اخطار',				// title
+					'تائید'					// buttonName
+				);
+			}
+			else
+			{
+				navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+				if (navigator.vibrate) {
+					navigator.vibrate(100);
+				}
+				
+				$('#modal-text').html('<ons-icon icon="md-spinner" size="28px" spin></ons-icon> <span>درحال دریافت اطلاعات...</span>');
+				modal.show({animation: "fade"});
+				
+				$.ajax({
+						url: "https://dlsmgroup.ir/hamrah-film/index.php",
+						type: "POST",
+						data: {
+							act: "emergency_generate_answer",
+							udid: window.localStorage.getItem("server_udid"),
+							emergency_get_number: text,
+						},
+						async: true,
+						success : function(text)
+						{
+							copyToClipboard(text);
+							if(text.length>3)
+								ons.notification.alert('نتیجه:<br>' + text);
+							else
+								ons.notification.alert('کد خطا:<br>' + text);
+							modal.hide({animation: "fade"});
+						},
+						error: function(jqXHR, exception) {
+							$('#modal-text').html('<ons-icon icon="fa-wifi" size="28px"></ons-icon> <span>لطفا به شبکه اینترنت متصل شوید.</span>');
+							modal.show({animation: "fade"});
+							setTimeout(function(){ modal.hide({animation: "fade"}); }, 2000);
+						},
+				});
+			}
+		}		
+
+		
+		
+		
 	</script>
 </head>
 <body onload="init();" >
@@ -588,16 +584,57 @@ input[type=email], input[type=password] {
 			<div class="login-form">
 				<p>لطفا گزینه مورد نظر خود را انتخاب نمایید :</p>
 				<br>
-				<ons-button id="goto-active_user-button" modifier="large--cta">اسکن اطلاعات دستگاه</ons-button>
+				<ons-button id="goto-scan_box-button" modifier="large--cta">اسکن اطلاعات دستگاه</ons-button>
 				<br>
-				<ons-button id="goto-deactive_user-button" modifier="large--cta">انتخاب دستگاه از لیست</ons-button>
+				<ons-button id="goto-select_box_from_list-button" modifier="large--cta">انتخاب دستگاه از لیست</ons-button>
+				<br id="goto-select_box_from_list-br">
+				<ons-button id="goto-select_last_box-button" modifier="large--cta">همون دستگاه دفعه قبلی</ons-button>
+				<br id="goto-select_last_box-br">
+				<ons-button id="goto-get_udid_from_wifi-button" modifier="large--cta">دریافت اطلاعات دستگاه از شبکه</ons-button>
 				<br>
 				<ons-button id="goto-code_list-button" modifier="large--cta">لیست کدهای خطا</ons-button>
 			</div>
 		</ons-page>
 	</template>
+	<template id="services.html">
+		<ons-page id="services" on-device-backbutton="go_back_index();">
+			<ons-toolbar>
+				<div class="center" style="font-size:15px;direction: rtl;text-align: right;padding-right:10px;">نرم افزار مدیریت همراه فیلم - ویژه پشتیبانی</div>
+			</ons-toolbar>
+			<div class="login-form">
+				<p>لطفا یکی از خدمات زیر را انتخاب نمایی :</p>
+				<br>
+				<ons-button id="goto-next_month-button" modifier="large--cta">فعال سازی سیستم برای ماه آتی</ons-button>
+				<br>
+				<ons-button id="goto-update_film_list-button" modifier="large--cta">به روزرسانی لیست فیلم ها</ons-button>
+				<br>
+				<ons-button id="goto-emergency_code-button" modifier="large--cta">دریافت کد حالت فوق العاده</ons-button>
+				<br>
+				<ons-button id="goto-back-button" modifier="large--cta">بازگشت به صفحه اصلی</ons-button>
+			</div>
+		</ons-page>
+	</template>
+	<template id="device_list.html">
+		<ons-page id="device_list" on-device-backbutton="go_back_index();">
+			<ons-toolbar>
+				<div class="center" style="font-size:15px;direction: rtl;text-align: right;padding-right:10px;">نرم افزار مدیریت همراه فیلم - ویژه پشتیبانی</div>
+			</ons-toolbar>
+			<div class="login-form empty_list">
+				<p>هیچ استگاهی تا کنون ثبت نشده است</p>
+				<br>
+				<ons-button id="goto-home-button" modifier="large--cta">بازگشت</ons-button><br>
+			</div>
+			<div class="login-form full_list">
+				<p>لطفا یکی از دستگاه های زیر را انتخاب نمایی :</p>
+				<br>
+				<div id="full_list_content">
+					<ons-button id="goto-home-button" modifier="large--cta"></ons-button><br>
+				</div>
+			</div>
+		</ons-page>
+	</template>
 	<template id="code_list.html">
-		<ons-page id="home" on-device-backbutton="go_back_index();">
+		<ons-page id="code_list" on-device-backbutton="go_back_index();">
 			<ons-toolbar>
 				<div class="center" style="font-size:15px;direction: rtl;text-align: right;padding-right:10px;">نرم افزار مدیریت همراه فیلم - ویژه پشتیبانی</div>
 			</ons-toolbar>
@@ -746,6 +783,18 @@ input[type=email], input[type=password] {
 						</div>
 					</div>
 				</ons-card>
+				<ons-card>
+					<div class="title"  style="direction:rtl;text-align:right;">
+					  کد خطا : 23
+					</div>
+					<div class="content"  style="direction:rtl;text-align:justify;">
+						<div>
+							<span style="font-weight:bold;">در هنگام تمدید آبمونمان</span>
+							<hr/>
+							تعداد روز وارد شده صحیح نمی باشد
+						</div>
+					</div>
+				</ons-card>
 			</div>
 		</ons-page>
 	</template>
@@ -762,7 +811,23 @@ input[type=email], input[type=password] {
 			</div>
 		</ons-dialog>
 	</template>
-	
+	<template id="dialog-select-days.html">
+		<ons-dialog id="dialog-select-days-alert">
+			<div style="text-align: center; padding: 10px;">
+				<p id="dialog-text" class="rtl">
+					<ons-select id="choose-change-days" onchange="editSelects_change_days()">
+						<option value="93">93</option>
+						<option value="62">62</option>
+						<option value="31">31</option>
+						<option value="21">21</option>
+						<option value="7">7</option>
+						<option value="3">3</option>
+					</ons-select>
+				</p>
+				<p><ons-button onclick="hideDialog('dialog-select-days-alert');set_next_month();">تائید</ons-button></p>
+			</div>
+		</ons-dialog>
+	</template>
 	
 	
 	
